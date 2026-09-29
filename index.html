@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lane Dash 2.0</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #080b12;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  color: white;
+}
+
+.game {
+  position: relative;
+  width: 420px;
+  height: 700px;
+  max-width: 95vw;
+  max-height: 92vh;
+  overflow: hidden;
+  border-radius: 22px;
+  background: linear-gradient(#17243b, #30445b 45%, #10151e);
+  box-shadow: 0 20px 60px #000;
+}
+
+/* CITY */
+
+.city {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.building {
+  position: absolute;
+  bottom: 42%;
+  width: 70px;
+  background: #17202c;
+  border-radius: 4px 4px 0 0;
+}
+
+.building:nth-child(1) {
+  height: 150px;
+  left: 2%;
+}
+
+.building:nth-child(2) {
+  height: 210px;
+  left: 22%;
+}
+
+.building:nth-child(3) {
+  height: 125px;
+  right: 20%;
+}
+
+.building:nth-child(4) {
+  height: 190px;
+  right: 0;
+}
+
+.window {
+  width: 9px;
+  height: 12px;
+  background: #ffd966;
+  position: absolute;
+  box-shadow: 0 0 8px #ffd966;
+}
+
+/* ROAD */
+
+.road {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 0;
+  bottom: 0;
+  background:
+    linear-gradient(
+      90deg,
+      #20252d 0%,
+      #303640 50%,
+      #20252d 100%
+    );
+  transform: perspective(500px) rotateX(2deg);
+}
+
+.roadLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 35px,
+    #aeb6c4 35px,
+    #aeb6c4 75px
+  );
+  opacity: 0.6;
+}
+
+.line1 {
+  left: 33.33%;
+}
+
+.line2 {
+  left: 66.66%;
+}
+
+/* HUD */
+
+.hud {
+  position: absolute;
+  z-index: 20;
+  top: 15px;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.hud span {
+  background: #0008;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+
+/* PLAYER */
+
+.player {
+  position: absolute;
+  z-index: 10;
+  width: 48px;
+  height: 105px;
+  bottom: 105px;
+  left: calc(50% - 24px);
+  transition: left 0.15s ease;
+}
+
+/* HEAD */
+
+.head {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  background: #8d5524;
+  border-radius: 50%;
+  top: 0;
+  left: 7px;
+  border: 2px solid #30180b;
+  z-index: 3;
+}
+
+.hair {
+  position: absolute;
+  width: 34px;
+  height: 14px;
+  background: #17100c;
+  border-radius: 18px 18px 5px 5px;
+  top: -2px;
+  left: 7px;
+  z-index: 4;
+}
+
+/* BODY */
+
+.body {
+  position: absolute;
+  width: 40px;
+  height: 47px;
+  background: #1976d2;
+  border-radius: 10px 10px 6px 6px;
+  top: 30px;
+  left: 4px;
+}
+
+/* ARMS */
+
+.arm {
+  position: absolute;
+  width: 10px;
+  height: 38px;
+  background: #8d5524;
+  border-radius: 8px;
+  top: 34px;
+  transform-origin: top center;
+}
+
+.arm.left {
+  left: -5px;
+  transform: rotate(25deg);
+}
+
+.arm.right {
+  right: -5px;
+  transform: rotate(-25deg);
+}
+
+/* LEGS */
+
+.leg {
+  position: absolute;
+  width: 13px;
+  height: 38px;
+  background: #20242a;
+  top: 72px;
+  border-radius: 7px;
+  transform-origin: top center;
+}
+
+.leg.left {
+  left: 9px;
+  animation: runLeft 0.35s infinite alternate;
+}
+
+.leg.right {
+  right: 9px;
+  animation: runRight 0.35s infinite alternate;
+}
+
+/* SHOES */
+
+.shoe {
+  position: absolute;
+  width: 23px;
+  height: 11px;
+  background: white;
+  border-radius: 8px;
+  bottom: -5px;
+}
+
+.leg.left .shoe {
+  left: -7px;
+}
+
+.leg.right .shoe {
+  right: -7px;
+}
+
+@keyframes runLeft {
+  from {
+    transform: rotate(25deg);
+  }
+
+  to {
+    transform: rotate(-30deg);
+  }
+}
+
+@keyframes runRight {
+  from {
+    transform: rotate(-30deg);
+  }
+
+  to {
+    transform: rotate(25deg);
+  }
+}
+
+/* JUMP */
+
+.player.jumping {
+  animation: jump 0.7s ease-out;
+}
+
+@keyframes jump {
+  0% {
+    bottom: 105px;
+  }
+
+  45% {
+    bottom: 260px;
+  }
+
+  100% {
+    bottom: 105px;
+  }
+}
+
+/* OBSTACLE */
+
+.obstacle {
+  position: absolute;
+  z-index: 8;
+  width: 58px;
+  height: 48px;
+  background: #d84b3e;
+  border-radius: 8px;
+  border-bottom: 7px solid #79241e;
+  box-shadow: 0 8px 15px #0008;
+}
+
+.obstacle::before,
+.obstacle::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #222;
+  border-radius: 50%;
+  bottom: -13px;
+}
+
+.obstacle::before {
+  left: 8px;
+}
+
+.obstacle::after {
+  right: 8px;
+}
+
+/* COIN */
+
+.coin {
+  position: absolute;
+  z-index: 9;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3a1 0%, #ffd700 45%, #d69e00 100%);
+  border: 3px solid #fff1a6;
+  box-shadow: 0 0 18px #ffd700;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotateY(0deg);
+  }
+
+  to {
+    transform: rotateY(360deg);
+  }
+}
+
+/* START SCREEN */
+
+.startScreen {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: #000b;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 25px;
+}
+
+.startScreen h1 {
+  font-size: 38px;
+  margin: 0 0 10px;
+}
+
+.startScreen p {
+  color: #ccc;
+  margin-bottom: 25px;
+}
+
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 13px 22px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  background: #ffd700;
+  color: #111;
+}
+
+/* MOBILE CONTROLS */
+
+.controls {
+  position: absolute;
+  z-index: 25;
+  bottom: 18px;
+  left: 15px;
+  right: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.controlButton {
+  width: 62px;
+  height: 50px;
+  border-radius: 14px;
+  background: #0009;
+  color: white;
+  border: 1px solid #ffffff33;
+  font-size: 22px;
+}
+
+.jumpButton {
+  background: #ffd700;
+  color: #111;
+}
+
+.gameOver {
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game" id="game">
+
+  <div class="city">
+    <div class="building"></div>
+    <div class="building"></div>
+    <div class="building"></div>
+    <div class="building"></div>
+  </div>
+
+  <div class="road">
+    <div class="roadLine line1"></div>
+    <div class="roadLine line2"></div>
+  </div>
+
+  <div class="hud">
+    <span id="score">🏆 0</span>
+    <span id="coins">🪙 0</span>
+  </div>
+
+  <!-- HUMAN PLAYER -->
+
+  <div class="player" id="player">
+
+    <div class="hair"></div>
+    <div class="head"></div>
+
+    <div class="body"></div>
+
+    <div class="arm left"></div>
+    <div class="arm right"></div>
+
+    <div class="leg left">
+      <div class="shoe"></div>
+    </div>
+
+    <div class="leg right">
+      <div class="shoe"></div>
+    </div>
+
+  </div>
+
+  <!-- START -->
+
+  <div class="startScreen" id="startScreen">
+    <h1>LANE DASH</h1>
+    <p>Run • Jump • Collect Coins • Survive</p>
+    <button id="startButton">START RUN</button>
+  </div>
+
+  <!-- CONTROLS -->
+
+  <div class="controls">
+    <button class="controlButton" id="leftButton">⬅️</button>
+    <button class="controlButton jumpButton" id="jumpButton">⬆️</button>
+    <button class="controlButton" id="rightButton">➡️</button>
+  </div>
+
+</div>
+
+
+<script>
+let audioCtx;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playSound(type) {
+  initAudio();
+
+  const oscillator = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  oscillator.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  const now = audioCtx.currentTime;
+
+  if (type === "coin") {
+    oscillator.frequency.setValueAtTime(700, now);
+    oscillator.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    oscillator.start(now);
+    oscillator.stop(now + 0.15);
+  }
+
+  if (type === "jump") {
+    oscillator.frequency.setValueAtTime(250, now);
+    oscillator.frequency.exponentialRampToValueAtTime(700, now + 0.2);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    oscillator.start(now);
+    oscillator.stop(now + 0.2);
+  }
+
+  if (type === "crash") {
+    oscillator.type = "sawtooth";
+    oscillator.frequency.setValueAtTime(120, now);
+    oscillator.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+    gain.gain.setValueAtTime(0.2, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    oscillator.start(now);
+    oscillator.stop(now + 0.3);
+  }
+}
+
+const game = document.getElementById("game");
+const player = document.getElementById("player");
+
+
+const scoreDisplay = document.getElementById("score");
+const coinsDisplay = document.getElementById("coins");
+
+const startScreen = document.getElementById("startScreen");
+const startButton = document.getElementById("startButton");
+
+const leftButton = document.getElementById("leftButton");
+const rightButton = document.getElementById("rightButton");
+const jumpButton = document.getElementById("jumpButton");
+
+let currentLane = 1;
+
+let score = 0;
+let coins = 0;
+
+let running = false;
+let jumping = false;
+
+let speed = 250;
+
+let lastTime = 0;
+let obstacleTimer = 0;
+let coinTimer = 0;
+
+let obstacles = [];
+let coinObjects = [];
+
+
+/* LANE POSITIONS */
+
+const lanes = [16.5, 50, 83.5];
+
+function updatePlayerLane() {
+
+  player.style.left =
+    `calc(${lanes[currentLane]}% - 24px)`;
+
+}
+
+
+/* MOVE LEFT */
+
+function moveLeft() {
+
+  if (!running) return;
+
+  if (currentLane > 0) {
+
+    currentLane--;
+
+    updatePlayerLane();
+
+  }
+
+}
+
+
+/* MOVE RIGHT */
+
+function moveRight() {
+
+  if (!running) return;
+
+  if (currentLane < 2) {
+
+    currentLane++;
+
+    updatePlayerLane();
+
+  }
+
+}
+
+
+/* JUMP */
+
+function jump() {
+  if (!running || jumping) return;
+  jumping = true;
+  playSound("jump");
+  player.classList.add("jumping");
+
+  setTimeout(() => {
+
+    player.classList.remove("jumping");
+
+    jumping = false;
+
+  }, 700);
+
+}
+
+
+/* CREATE OBSTACLE */
+
+function createObstacle() {
+
+  const obstacle = document.createElement("div");
+
+  obstacle.className = "obstacle";
+
+  const lane =
+    Math.floor(Math.random() * 3);
+
+  obstacle.dataset.lane = lane;
+
+  obstacle.style.left =
+    `calc(${lanes[lane]}% - 29px)`;
+
+  obstacle.style.top = "-60px";
+
+  game.appendChild(obstacle);
+
+  obstacles.push(obstacle);
+
+}
+
+
+/* CREATE COIN */
+
+function createCoin() {
+
+  const coin = document.createElement("div");
+
+  coin.className = "coin";
+
+  const lane =
+    Math.floor(Math.random() * 3);
+
+  coin.dataset.lane = lane;
+
+  coin.style.left =
+    `calc(${lanes[lane]}% - 16px)`;
+
+  coin.style.top = "-40px";
+
+  game.appendChild(coin);
+
+  coinObjects.push(coin);
+
+}
+
+
+/* COLLISION */
+
+function touching(a, b) {
+
+  const r1 = a.getBoundingClientRect();
+
+  const r2 = b.getBoundingClientRect();
+
+  return (
+
+    r1.left < r2.right &&
+    r1.right > r2.left &&
+    r1.top < r2.bottom &&
+    r1.bottom > r2.top
+
+  );
+
+}
+
+
+/* START GAME */
+
+function startGame() {
+
+  obstacles.forEach(o => o.remove());
+
+  coinObjects.forEach(c => c.remove());
+
+  obstacles = [];
+  coinObjects = [];
+
+  score = 0;
+  coins = 0;
+
+  speed = 250;
+
+  obstacleTimer = 0;
+  coinTimer = 0;
+
+  currentLane = 1;
+
+  updatePlayerLane();
+
+  scoreDisplay.textContent = "🏆 0";
+  coinsDisplay.textContent = "🪙 0";
+
+  running = true;
+
+  startScreen.style.display = "none";
+
+  lastTime = performance.now();
+
+  requestAnimationFrame(gameLoop);
+
+}
+
+
+/* GAME OVER */
+
+function gameOver() {
+  playSound("crash");
+  running = false;
+  startScreen.innerHTML = `
+
+    <h1>💥 GAME OVER</h1>
+
+    <p>
+      Score: ${Math.floor(score)}
+      <br>
+      🪙 Coins: ${coins}
+    </p>
+
+    <button id="restartButton">
+      PLAY AGAIN
+    </button>
+
+  `;
+
+  startScreen.style.display = "flex";
+
+  document
+    .getElementById("restartButton")
+    .onclick = startGame;
+
+}
+
+
+/* GAME LOOP */
+
+function gameLoop(time) {
+
+  if (!running) return;
+
+  const delta =
+    Math.min((time - lastTime) / 1000, 0.04);
+
+  lastTime = time;
+
+  score += delta * 10;
+
+  speed = Math.min(speed + delta * 8, 400);
+
+  obstacleTimer += delta;
+
+  coinTimer += delta;
+
+
+  /* CREATE OBSTACLES */
+
+  if (obstacleTimer > 1.1) {
+
+    createObstacle();
+
+    obstacleTimer = 0;
+
+  }
+
+
+  /* CREATE COINS */
+
+  if (coinTimer > 0.8) {
+
+    createCoin();
+
+    coinTimer = 0;
+
+  }
+
+
+  /* MOVE OBSTACLES */
+
+  for (let i = obstacles.length - 1; i >= 0; i--) {
+
+    const obstacle = obstacles[i];
+
+    let y =
+      parseFloat(obstacle.style.top);
+
+    y += speed * delta;
+
+    obstacle.style.top = y + "px";
+
+
+    /* COLLISION */
+
+    if (
+
+      !jumping &&
+      touching(player, obstacle)
+
+    ) {
+
+      gameOver();
+
+      return;
+
+    }
+
+
+    /* REMOVE */
+
+    if (y > game.clientHeight + 70) {
+
+      obstacle.remove();
+
+      obstacles.splice(i, 1);
+
+    }
+
+  }
+
+
+  /* MOVE COINS */
+
+  for (let i = coinObjects.length - 1; i >= 0; i--) {
+
+    const coin = coinObjects[i];
+
+    let y =
+      parseFloat(coin.style.top);
+
+    y += speed * delta;
+
+    coin.style.top = y + "px";
+
+
+    /* COLLECT */
+
+    if (touching(player, coin)) {
+  coins++;
+  playSound("coin");
+
+  coinsDisplay.textContent =
+    "🪙 " + coins;
+
+  coin.remove();
+  coinObjects.splice(i, 1);
+  continue;
+}
+
+    
+
+
+    /* REMOVE */
+
+    if (y > game.clientHeight + 50) {
+
+      coin.remove();
+
+      coinObjects.splice(i, 1);
+
+    }
+
+  }
+
+
+  scoreDisplay.textContent =
+    "🏆 " + Math.floor(score);
+
+
+  requestAnimationFrame(gameLoop);
+
+}
+
+
+/* KEYBOARD */
+
+document.addEventListener("keydown", function(event) {
+
+  if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+
+    moveLeft();
+
+  }
+
+  if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+
+    moveRight();
+
+  }
+
+  if (event.key === "ArrowUp" || event.code === "Space") {
+
+    event.preventDefault();
+
+    jump();
+
+  }
+
+});
+
+
+/* MOBILE BUTTONS */
+
+leftButton.addEventListener("click", moveLeft);
+
+rightButton.addEventListener("click", moveRight);
+
+jumpButton.addEventListener("click", jump);
+
+
+/* START */
+
+startButton.addEventListener("click", startGame);
+
+updatePlayerLane();
+
+</script>
+
+</body>
+</html>
